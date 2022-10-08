@@ -18,14 +18,26 @@ def cv_show(img, name):
     cv2.destroyAllWindows()
 
 
-hist = cv2.calcHist([img], [0], None, [256], [0, 256])
+hist = cv2.calcHist([img], [0], None, [256], [0, 256])  # 灰度图
 plt.hist(img.ravel(), 256)
 plt.show()
 
-img = cv2.imread('FCB.jpg', )
-color = ('b', 'g', 'r')
+img = cv2.imread('FCB.jpg')
+color = ('b', 'g', 'r')  # rgb图
 for i, col in enumerate(color):
     histr = cv2.calcHist([img], [i], None, [256], [0, 256])
     plt.plot(histr, color=col)
     plt.xlim([0, 256])
 plt.show()
+
+# 创建mask
+# 掩膜就是一个黑框，变成255，拿出图片需要的部分
+mask = np.zeros(img.shape[0:2], np.uint8)
+print(mask.shape)
+mask[50:250, 100:350] = 255  # 将一定范围的像素转换为255
+cv_show(mask, "mask")
+
+img = cv2.imread('FCB.jpg', 0)
+cv_show(img, "img")  # 显示原始灰度图像
+mask_img = cv2.bitwise_and(img, img, mask=mask)  # 对图像的像素进行与操作
+cv_show(mask_img, 'mask_img')
