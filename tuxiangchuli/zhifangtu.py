@@ -41,3 +41,21 @@ img = cv2.imread('FCB.jpg', 0)
 cv_show(img, "img")  # 显示原始灰度图像
 mask_img = cv2.bitwise_and(img, img, mask=mask)  # 对图像的像素进行与操作
 cv_show(mask_img, 'mask_img')
+
+# 均衡处理
+# 让直方图更均衡，图像更清晰，边界点更明显
+# 映射操作：从一个分布映射到另外一个操作 累计概率*取值范围 再取整
+equ = cv2.equalizeHist(img)
+plt.hist(equ.ravel(), 256)
+plt.show()
+
+res = np.hstack((img, equ))
+cv_show(res, 'res')
+
+# 可能会丢失细节，因为对整体图像做了平均
+# 自适应直方图均衡化
+# 对部分分别做均衡化
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+res_clahe = clahe.apply(img)
+res = np.hstack((img, equ, res_clahe))
+cv_show(res, 'res')
