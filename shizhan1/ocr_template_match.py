@@ -40,5 +40,24 @@ refCnts, hierarchy = cv2.findContours(ref.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_A
 
 cv2.drawContours(img, refCnts, -1, (0, 0, 255), 3)
 cv_show(img, 'img')
-print(np.array(refCnts).shape) # 打印一下大小，是10个
+print(np.array(refCnts).shape)  # 打印一下大小，是10个
 
+boundingBox = [cv2.boundingRect(c) for c in refCnts]
+print(boundingBox)  # （x,y,h,w）
+
+# zip 包装成一个元组 sorted排序，key按照第一个元素排序
+(refCnts, boundingBox) = zip(*sorted(zip(refCnts, boundingBox),
+                                     key=lambda b: b[1][0], reverse=False))
+
+print(boundingBox)  # 从小到大的排序
+
+# 用字典保存数字的模板
+digits = {}
+for (i, c) in enumerate(refCnts):
+    (x, y, w, h) = cv2.boundingRect(c)
+    # 画一个框
+    roi = ref[y:y + h, x:x + w]
+    roi = cv2.resize(roi, (57, 88))
+    digits[i] = roi
+
+# 初始化卷积核
