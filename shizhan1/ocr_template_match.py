@@ -28,6 +28,17 @@ def resize(img, width):
     return new_img
 
 
+def digits_sorted(Cnts):
+    boundingBox = [cv2.boundingRect(c) for c in Cnts]
+    print(boundingBox)  # （x,y,h,w）
+
+    # zip 包装成一个元组 sorted排序，key按照第一个元素排序
+    (Cnts, boundingBox) = zip(*sorted(zip(Cnts, boundingBox),
+                                      key=lambda b: b[1][0], reverse=False))
+    print(boundingBox)
+    return Cnts, boundingBox
+
+
 img = cv2.imread('images/numbers.png')
 cv_show(img, 'img')
 ref = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -122,6 +133,7 @@ cv_show(thresh, "thresh")
 contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
                                        cv2.CHAIN_APPROX_SIMPLE)
 cnts = contours
+# print(cnts)
 cur_img = image.copy()
 # 画在原始图像之中
 cv2.drawContours(cur_img, cnts, -1, (0, 0, 255), 3)
@@ -129,3 +141,39 @@ cv_show(cur_img, "cur_img")
 locs = []
 
 # 储存轮廓线的位置
+for (i, c) in enumerate(cnts):
+    (x, y, w, h) = cv2.boundingRect(c)
+    # 按照长宽比例和长宽大小来筛选合适的轮廓
+    ar = w / float(h)
+    if ar > 2.4 and ar < 4.2:
+        if (w > 40 and w < 56) and (h > 15 and h < 25):
+            locs.append((x, y, w, h))
+
+locs = sorted(locs, key=lambda x: x[0])
+print(locs)
+output = []
+# 遍历数组，截取对应图像
+for (i, (gX, gY, gW, gH)) in enumerate(locs):
+    # 稍微都截大一点
+    group = gray[gY - 5: gY + gH + 5, gX - 5: gX + gW + 5]
+    cv_show(group, 'group')
+    # 二值化处理一下
+    group = cv2.threshold(group, 0, 255,
+                          cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    cv_show(group, 'group')
+    # 得到轮廓
+    digitCnts, hierarchy = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL,
+                                            cv2.CHAIN_APPROX_SIMPLE)
+    cur_group = group.copy()
+    # 画出轮廓，但是因为太小了，估计把字遮住了
+    cv2.drawContours(cur_group, digitCnts, 0, (0, 0, 255), 3)
+    cv_show(cur_group, "cur_group")
+    digitCnts_sorted = digits_sorted(cnts)[1]
+    for c in digitCnts_sorted:
+        print(c)
+        x, y, w, h = c[0], c[1], c[2], c[3]
+        print(x, y, w, h)
+        roi = group[y:y + h, x:x + w]
+        cv_show(roi, "roi")
+        roi = cv2.resize(roi, (57, 88))
+        cv_show(roi, "roi")
