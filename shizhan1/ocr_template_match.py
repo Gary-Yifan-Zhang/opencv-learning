@@ -116,3 +116,16 @@ cv_show(thresh, "thresh")
 thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, rectKernel)
 thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, rectKernel)
 cv_show(thresh, "thresh")
+
+# 画出轮廓线
+# RETR_EXTERNAL外部轮廓，CHAIN_APPROX_SIMPLE储存简单的信息
+contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+                                       cv2.CHAIN_APPROX_SIMPLE)
+cnts = contours
+cur_img = image.copy()
+# 画在原始图像之中
+cv2.drawContours(cur_img, cnts, -1, (0, 0, 255), 3)
+cv_show(cur_img, "cur_img")
+locs = []
+
+# 储存轮廓线的位置
