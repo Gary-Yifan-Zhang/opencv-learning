@@ -152,27 +152,50 @@ print("locs:", locs)
 output = []
 # 遍历数组，截取对应图像
 for (i, (gX, gY, gW, gH)) in enumerate(locs):
+    groupOutput = []
     # 稍微都截大一点
     group = gray[gY - 5: gY + gH + 5, gX - 5: gX + gW + 5]
-    print('group:', group.shape)
-    cv_show(group, 'group')
+    # print('group:', group.shape)
+    # cv_show(group, 'group')
+
     # 二值化处理一下
     group = cv2.threshold(group, 0, 255,
                           cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    cv_show(group, 'group')
+    # cv_show(group, 'group')
     # 得到轮廓
     digitCnts, hierarchy = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL,
                                             cv2.CHAIN_APPROX_SIMPLE)
     cur_group = group.copy()
     # 画出轮廓，但是因为太小了，估计把字遮住了
     cv2.drawContours(cur_group, digitCnts, -1, (0, 0, 255), 3)
-    cv_show(cur_group, "cur_group")
+    # cv_show(cur_group, "cur_group")
     digitCnts_sorted = digits_sorted(digitCnts)[0]
     for c in digitCnts_sorted:
         print(c)
         (x, y, w, h) = cv2.boundingRect(c)
-        print(x, y, w, h)
+        # print(x, y, w, h)
         roi = group[y:y + h, x:x + w]
         # cv_show(roi, "roi")
         roi = cv2.resize(roi, (57, 88))
         # cv_show(roi, "roi")
+
+        # 打分
+        scores = []
+        for (digit, digitROI) in digits.items():
+            # 模板匹配
+            result = cv2.matchTemplate(roi, digitROI,
+                                       cv2.TM_CCOEFF)
+            (_, score, _, _) = cv2.minMaxLoc(result)
+            scores.append(score)
+        groupOutput.append(str(np.argmax(scores)))
+        # 2.3 画出来
+        cv2.rectangle(image, (gX - 5, gY - 5), (gX + gW + 5, gY + gH + 5), (0, 0, 255), 1)  # 左上角,右下角
+        # 2.4 putText参数：图片,添加的文字,左上角坐标,字体,字体大小,颜色,字体粗细
+        cv2.putText(image, "".join(groupOutput), (gX, gY - 15),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+
+        # 2.5 得到结果
+        output.extend(groupOutput)
+        print("groupOutput:", groupOutput)
+
+        cv_show(image, 'image')
