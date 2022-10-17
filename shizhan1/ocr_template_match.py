@@ -29,14 +29,12 @@ def resize(img, width):
 
 
 def digits_sorted(Cnts):
-    boundingBox = [cv2.boundingRect(c) for c in Cnts]
-    print(boundingBox)  # （x,y,h,w）
+    boundingBoxes = [cv2.boundingRect(c) for c in Cnts]  # 用一个最小的矩形，把找到的形状包起来x,y,h,w
+    (cnts, boundingBoxes) = zip(*sorted(zip(Cnts, boundingBoxes),
+                                        key=lambda b: b[1][i]))
 
-    # zip 包装成一个元组 sorted排序，key按照第一个元素排序
-    (Cnts, boundingBox) = zip(*sorted(zip(Cnts, boundingBox),
-                                      key=lambda b: b[1][0], reverse=False))
-    print(boundingBox)
-    return Cnts, boundingBox
+    return cnts, boundingBoxes
+    print("digitCnts_sorted", digitCnts_sorted)
 
 
 img = cv2.imread('images/numbers.png')
@@ -150,12 +148,13 @@ for (i, c) in enumerate(cnts):
             locs.append((x, y, w, h))
 
 locs = sorted(locs, key=lambda x: x[0])
-print(locs)
+print("locs:", locs)
 output = []
 # 遍历数组，截取对应图像
 for (i, (gX, gY, gW, gH)) in enumerate(locs):
     # 稍微都截大一点
     group = gray[gY - 5: gY + gH + 5, gX - 5: gX + gW + 5]
+    print('group:', group.shape)
     cv_show(group, 'group')
     # 二值化处理一下
     group = cv2.threshold(group, 0, 255,
@@ -166,14 +165,14 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
                                             cv2.CHAIN_APPROX_SIMPLE)
     cur_group = group.copy()
     # 画出轮廓，但是因为太小了，估计把字遮住了
-    cv2.drawContours(cur_group, digitCnts, 0, (0, 0, 255), 3)
+    cv2.drawContours(cur_group, digitCnts, -1, (0, 0, 255), 3)
     cv_show(cur_group, "cur_group")
-    digitCnts_sorted = digits_sorted(cnts)[1]
+    digitCnts_sorted = digits_sorted(digitCnts)[0]
     for c in digitCnts_sorted:
         print(c)
-        x, y, w, h = c[0], c[1], c[2], c[3]
+        (x, y, w, h) = cv2.boundingRect(c)
         print(x, y, w, h)
         roi = group[y:y + h, x:x + w]
-        cv_show(roi, "roi")
+        # cv_show(roi, "roi")
         roi = cv2.resize(roi, (57, 88))
-        cv_show(roi, "roi")
+        # cv_show(roi, "roi")
