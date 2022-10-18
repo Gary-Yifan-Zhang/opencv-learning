@@ -188,14 +188,14 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
             (_, score, _, _) = cv2.minMaxLoc(result)
             scores.append(score)
         groupOutput.append(str(np.argmax(scores)))
-        # 2.3 画出来
-        cv2.rectangle(image, (gX - 5, gY - 5), (gX + gW + 5, gY + gH + 5), (0, 0, 255), 1)  # 左上角,右下角
-        # 2.4 putText参数：图片,添加的文字,左上角坐标,字体,字体大小,颜色,字体粗细
-        cv2.putText(image, "".join(groupOutput), (gX, gY - 15),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+    # 2.3 画出来
+    cv2.rectangle(image, (gX - 5, gY - 5), (gX + gW + 5, gY + gH + 5), (0, 0, 255), 1)  # 左上角,右下角
+    # 2.4 putText参数：图片,添加的文字,左上角坐标,字体,字体大小,颜色,字体粗细
+    cv2.putText(image, "".join(groupOutput), (gX, gY - 15),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-        # 2.5 得到结果
-        output.extend(groupOutput)
-        print("groupOutput:", groupOutput)
+    # 2.5 得到结果
+    output.extend(groupOutput)
+    print("groupOutput:", groupOutput)
 
-        cv_show(image, 'image')
+    cv_show(image, 'image')
