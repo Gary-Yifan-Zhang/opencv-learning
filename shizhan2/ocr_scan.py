@@ -24,7 +24,7 @@ def resize(img, hight):
 
 
 # 不知道为啥要完整路径，不然报错
-img = cv2.imread('D:/pycharmprojects/opencv/shizhan2/picture/receipt.jpg')
+img = cv2.imread('D:/pycharmprojects/opencv/shizhan2/picture/page.jpg')
 # 这也太大了
 cv_show(img, 'img')
 # 记录一下原图的比例
@@ -44,17 +44,23 @@ cv_show(edged, 'edged')
 cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST,
                         cv2.CHAIN_APPROX_SIMPLE)[0]
 
-# cv2.drawContours(img, cnts, -1, (0, 0, 255), 3)
-# cv_show(img, 'img')
+# img_cnts = img.copy()
+# cv2.drawContours(img_cnts, cnts, -1, (0, 0, 255), 3)
+# cv_show(img_cnts, 'img_cnts')
 
 # 外轮廓一定是最大的几个，直接排序操作
-cnt = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
+cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
 
 # 遍历轮廓
 for c in cnts:
-    length = cv2.arcLength(c, True)
-    # 0.02 * length精度控制
-    approx = cv2.approxPolyDP(c, 0.02 * length, True)
+    peri = cv2.arcLength(c, True)
+    # 0.02 * length 精度控制
+    approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+    print(len(approx))
+    # 四个点的就拿出来（四个边的）
     if len(approx) == 4:
-        screencnt = approx
+        screenCnt = approx
         break
+
+cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 2)
+cv_show(img, 'img')
