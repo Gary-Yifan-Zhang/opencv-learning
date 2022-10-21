@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # img = cv2.imread('cat.jpg', cv2.IMREAD_GRAYSCALE)
-img = cv2.imread('dog.png', cv2.IMREAD_GRAYSCALE)
+img = cv2.imread('D:/pycharmprojects/opencv/xingtaixue/dog.png', cv2.IMREAD_GRAYSCALE)
 
-cir = cv2.imread('circle.jpg')
+cir = cv2.imread('D:/pycharmprojects/opencv/xingtaixue/circle.jpg')
 
 
 def cv_show(img, name):
