@@ -5,6 +5,7 @@ from imutils import contours
 import imutils
 import numpy as np
 import argparse
+from scipy.spatial import distance as dist
 
 
 def cv_show(img, name):
@@ -22,28 +23,60 @@ def resize(img, hight):
     new_img = cv2.resize(img, (new_h, new_w))
     return new_img
 
-def order_points_old(pts):
-    # initialize a list of coordinates that will be ordered
-    # such that the first entry in the list is the top-left,
-    # the second entry is the top-right, the third is the
-    # bottom-right, and the fourth is the bottom-left
-    rect = np.zeros((4, 2), dtype="float32")
 
-    # the top-left point will have the smallest sum, whereas
-    # the bottom-right point will have the largest sum
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
+def order_points(pts):
+    # sort the points based on their x-coordinates
+    xSorted = pts[np.argsort(pts[:, 0]), :]
 
-    # now, compute the difference between the points, the
-    # top-right point will have the smallest difference,
-    # whereas the bottom-left will have the largest difference
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
+    # grab the left-most and right-most points from the sorted
+    # x-roodinate points
+    leftMost = xSorted[:2, :]
+    rightMost = xSorted[2:, :]
 
-    # return the ordered coordinates
-    return rect
+    # now, sort the left-most coordinates according to their
+    # y-coordinates so we can grab the top-left and bottom-left
+    # points, respectively
+    leftMost = leftMost[np.argsort(leftMost[:, 1]), :]
+    (tl, bl) = leftMost
+
+    # now that we have the top-left coordinate, use it as an
+    # anchor to calculate the Euclidean distance between the
+    # top-left and right-most points; by the Pythagorean
+    # theorem, the point with the largest distance will be
+    # our bottom-right point
+    D = dist.cdist(tl[np.newaxis], rightMost, "euclidean")[0]
+    (br, tr) = rightMost[np.argsort(D)[::-1], :]
+
+    # return the coordinates in top-left, top-right,
+    # bottom-right, and bottom-left order
+    return np.array([tl, tr, br, bl], dtype="float32")
+
+
+def transform(img, screenCnt):
+    ord = order_points(screenCnt)
+    (tl, tr, bl, br) = ord
+
+    # 求边长
+    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+    maxWidth = max(int(widthA), int(widthB))
+
+    heightA = np.sqrt(((br[0] - tr[0]) ** 2) + ((br[1] - tr[1]) ** 2))
+    heightB = np.sqrt(((bl[0] - tl[0]) ** 2) + ((bl[1] - tl[1]) ** 2))
+    maxHeight = max(int(heightA), int(heightB))
+
+    # 变换后的坐标
+    dst = np.array([
+        [0, 0],
+        [maxWidth - 1, 0],
+        [maxWidth - 1, maxHeight - 1],
+        [0, maxHeight - 1]], dtype='float32'
+    )
+
+    M = cv2.getPerspectiveTransform(ord, dst)
+    warped = cv2.warpPerspective(img, M, (maxWidth, maxHeight))
+    return warped
+
 
 # 不知道为啥要完整路径，不然报错
 img = cv2.imread('D:/pycharmprojects/opencv/shizhan2/picture/page.jpg')
@@ -86,3 +119,10 @@ for c in cnts:
 
 cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 2)
 cv_show(img, 'img')
+
+warped = transform(orig, screenCnt.reshape(4, 2) * ratio)
+warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+ref = cv2.threshold(warped, 100, 255, cv2.THRESH_BINARY)[1]
+cv2.imwrite('scan.jpg', ref)
+cv_show(ref,'ref')
+cv_show(resize(ref, hight=650), 'ref')
