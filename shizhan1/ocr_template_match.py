@@ -7,7 +7,6 @@
 
 import cv2
 from imutils import contours
-import imutils
 import numpy as np
 import argparse
 
@@ -28,13 +27,22 @@ def resize(img, width):
     return new_img
 
 
-def digits_sorted(Cnts):
-    boundingBoxes = [cv2.boundingRect(c) for c in Cnts]  # 用一个最小的矩形，把找到的形状包起来x,y,h,w
-    (cnts, boundingBoxes) = zip(*sorted(zip(Cnts, boundingBoxes),
-                                        key=lambda b: b[1][i]))
+def sort_contours(cnts, method="left-to-right"):
+    reverse = False
+    i = 0
 
-    return cnts, boundingBoxes
-    print("digitCnts_sorted", digitCnts_sorted)
+    if method == "right-to-left" or method == "bottom-to-top":
+        reverse = True
+
+    if method == "top-to-bottom" or method == "bottom-to-top":
+        i = 1
+
+    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
+                                        key=lambda b: b[1][i], reverse=reverse))
+
+    return (cnts, boundingBoxes)
+
 
 
 img = cv2.imread('images/numbers.png')
@@ -167,9 +175,10 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
                                             cv2.CHAIN_APPROX_SIMPLE)
     cur_group = group.copy()
     # 画出轮廓，但是因为太小了，估计把字遮住了
-    cv2.drawContours(cur_group, digitCnts, -1, (0, 0, 255), 3)
+    cv2.drawContours(cur_group, digitCnts,-1, (0, 0, 255), 3)
     # cv_show(cur_group, "cur_group")
-    digitCnts_sorted = digits_sorted(digitCnts)[0]
+    # digitCnts = list(digitCnts)
+    digitCnts_sorted = sort_contours(digitCnts, method='left-to-right')[0]
     for c in digitCnts_sorted:
         print(c)
         (x, y, w, h) = cv2.boundingRect(c)
