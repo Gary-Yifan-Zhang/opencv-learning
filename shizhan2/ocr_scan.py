@@ -14,14 +14,19 @@ def cv_show(img, name):
     cv2.destroyAllWindows()
 
 
-def resize(img, hight):
-    # 等比例改变图像大小
-    w, h = img.shape[0], img.shape[1]
-    new_h = hight
-    new_w = int(hight * w / h)  # 必须是整数
-    print("新的长和宽：", new_w, new_h)
-    new_img = cv2.resize(img, (new_h, new_w))
-    return new_img
+def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
+    dim = None
+    (h, w) = image.shape[:2]
+    if width is None and height is None:
+        return image
+    if width is None:
+        r = height / float(h)
+        dim = (int(w * r), height)
+    else:
+        r = width / float(w)
+        dim = (width, int(h * r))
+    resized = cv2.resize(image, dim, interpolation=inter)
+    return resized
 
 
 def order_points(pts):
@@ -54,7 +59,7 @@ def order_points(pts):
 
 def transform(img, screenCnt):
     ord = order_points(screenCnt)
-    (tl, tr, bl, br) = ord
+    (tl, tr, br, bl) = ord
 
     # 求边长
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -79,14 +84,14 @@ def transform(img, screenCnt):
 
 
 # 不知道为啥要完整路径，不然报错
-img = cv2.imread('D:/pycharmprojects/opencv/shizhan2/picture/page.jpg')
+img = cv2.imread('D:/pycharmprojects/opencv/shizhan2/picture/receipt.jpg')
 # 这也太大了
 cv_show(img, 'img')
 # 记录一下原图的比例
 ratio = img.shape[0] / 500.0
 orig = img.copy()
 
-img = resize(orig, hight=500)
+img = resize(orig, height=500)
 cv_show(img, 'img')
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -122,7 +127,7 @@ cv_show(img, 'img')
 
 warped = transform(orig, screenCnt.reshape(4, 2) * ratio)
 warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-ref = cv2.threshold(warped, 100, 255, cv2.THRESH_BINARY)[1]
+ref = cv2.threshold(warped, 80, 255, cv2.THRESH_BINARY)[1]
 cv2.imwrite('scan.jpg', ref)
-cv_show(ref,'ref')
-cv_show(resize(ref, hight=650), 'ref')
+cv_show(ref, 'ref')
+cv_show(resize(ref, height=650), 'ref')
